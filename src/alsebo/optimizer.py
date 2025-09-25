@@ -8,7 +8,7 @@ def read_seq_files(exp_dir,obj):
 
     df_train = pd.read_csv(exp_dir+'seq_exp_data.csv')
     df_train = df_train.drop('seq_id',axis=1)
-    obj_col = obj.names
+    obj_col = obj['names']
 
     y_train = df_train[obj_col] #multi objective dataframe
     x_train = df_train.drop(obj_col, axis=1) #sequnce encodings
@@ -23,14 +23,32 @@ def read_seq_files(exp_dir,obj):
     return x_train, y_train, x_space, seq_ids
 
 def gpr(x_train, y_train):
-    """Train one GPR per objective"""
-    models = []
-    for i in range(y_train.shape[1]):
-        kernel = ConstantKernel(1.0) * Matern(length_scale=1.0, nu=2.5) + WhiteKernel()
+    """
+    Train Gaussian Process Regression model(s).
+    Handles both single-objective (SO) and multi-objective (MO).
+    """
+    # Ensure numpy array
+    y_train = np.asarray(y_train)
+
+    # Kernel choice
+    kernel = ConstantKernel(1.0) * Matern(length_scale=1.0, nu=2.5) + WhiteKernel()
+
+    # --- Single-objective case ---
+    if y_train.ndim == 1 or (y_train.ndim == 2 and y_train.shape[1] == 1):
+        if y_train.ndim == 2:  # shape (n_samples, 1)
+            y_train = y_train.ravel()  # flatten to (n_samples,)
         model = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-        model.fit(x_train, y_train[:, i])
-        models.append(model)
-    return models
+        model.fit(x_train, y_train)
+        return [model]
+
+    # --- Multi-objective case ---
+    else:
+        models = []
+        for i in range(y_train.shape[1]):  # loop over objectives
+            model = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+            model.fit(x_train, y_train[:, i])
+            models.append(model)
+        return models
 
 
 def seq_space_prediction(models, x_space):
@@ -62,4 +80,4 @@ def get_next_seq_bo(seq_ids, preds, top_k=10, strategy="UCB", weights=None):
     scores = acquisition_function(preds, strategy=strategy, weights=weights)
     idx = np.argsort(scores)[::-1][:top_k]
 
-    return seq_ids[idx], scores[idx]
+    return seq_ids[idx], scores[idx],idx
