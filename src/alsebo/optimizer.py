@@ -2,22 +2,31 @@ import numpy as np
 import pandas as pd
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern, WhiteKernel, ConstantKernel
+import os
 
-def read_seq_files(exp_dir,obj):
+def read_seq_files(exp_dir,obj_config,file_name="seq_exp_data.csv"):
     # Training data (sequences + experimental outcomes)
 
-    df_train = pd.read_csv(exp_dir+'seq_exp_data.csv')
-    df_train = df_train.drop('seq_id',axis=1)
-    obj_col = obj['names']
+    exp_data_fpath = os.path.join(exp_dir+file_name)
+    df_train = pd.read_csv(exp_data_fpath)
 
-    y_train = df_train[obj_col] #multi objective dataframe
-    x_train = df_train.drop(obj_col, axis=1) #sequnce encodings
+    train_seq_ids = df_train["seq_id"].values
+    df_train = df_train.drop('seq_id',axis=1)
+    obj_cols = obj_config['names']
+
+    y_train = df_train[obj_cols] #multi objective dataframe
+    x_train = df_train.drop(obj_cols, axis=1) #sequnce encodings
     
 
     # Full candidate sequence space
-    df_seq = pd.read_csv(exp_dir+'seq_space.csv')
-    # Todo delete the experimental sequnce from canditate sequnces to remove redundancy 
-    seq_ids = df_seq["seq_id"].values # actual sequences
+    seq_space_fpath = os.path.join(exp_dir+'seq_space.csv')
+    df_seq = pd.read_csv(seq_space_fpath)
+
+    # Delete the experimental sequnce from canditate sequnces to remove redundancy 
+    # Remove already tested sequences
+    df_seq = df_seq[~df_seq["seq_id"].isin(train_seq_ids)].reset_index(drop=True)
+
+    seq_ids = df_seq["seq_id"] # candidate sequences
     x_space = df_seq.drop('seq_id', axis=1)    # sequence encodings
                   
     return x_train, y_train, x_space, seq_ids
@@ -75,9 +84,47 @@ def acquisition_function(preds, strategy="UCB", beta=2.0, weights=None):
     # TODO: extend with Pareto-based EI, Thompson sampling, diversity clustering ....
     return scores
 
-def get_next_seq_bo(seq_ids, preds, top_k=10, strategy="UCB", weights=None):
+def get_next_seq_bo(seq_ids:pd.Series, preds, top_k=10, strategy="UCB", weights=None):
 
     scores = acquisition_function(preds, strategy=strategy, weights=weights)
     idx = np.argsort(scores)[::-1][:top_k]
+    next_best_seqs = seq_ids.iloc[idx].reset_index(drop=True)
 
-    return seq_ids[idx], scores[idx],idx
+    return next_best_seqs, scores[idx],idx
+
+def save_next_batch_results(exp_dir,next_best_seqs,idx,x_space,obj_config,obj_values: list[list],file_name="seq_exp_data.csv"):
+
+    obj_array = np.array(obj_values)
+    obj_cols = obj_config['names']
+    if obj_array.ndim == 1:
+        obj_array = obj_array.reshape(-1, 1)
+
+    if len(idx) != obj_array.shape[0]:
+        raise ValueError(
+            f"Batch size mismatch: {len(idx)} sequences "
+            f"but {obj_array.shape[0]} objective rows."
+        )
+
+    if obj_array.shape[1] != len(obj_cols):
+        raise ValueError(
+            f"Objective column mismatch: expected {len(obj_cols)}, "
+            f"got {obj_array.shape[1]}"
+        )
+
+    obj_df = pd.DataFrame(obj_array, columns=obj_cols)
+
+    next_best_seq_features = x_space.iloc[idx].reset_index(drop=True)
+    next_best_exp_data_df = pd.concat(
+        [next_best_seq_features,next_best_seqs, obj_df],
+           axis=1
+        )
+    exp_data_fpath = os.path.join(exp_dir+file_name)
+
+    next_best_exp_data_df.to_csv(
+        exp_data_fpath,
+        mode='a',
+        header=not os.path.exists(exp_data_fpath),
+        index=False
+    )
+
+
