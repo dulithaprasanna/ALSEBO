@@ -67,26 +67,34 @@ def seq_space_prediction(models, x_space):
         preds.append((mean, std))
     return preds
 
-def acquisition_function(preds, strategy="UCB", beta=2.0, weights=None):
+def acquisition_function(preds, obj_config, strategy="UCB", beta=2.0, weights=None):
     """
     preds: list of (mean, std) tuples for each objective
     strategy: UCB (Upper Confidence Bound) or EI
     weights: objective weights for scalarization
     """
-    n = len(preds[0][0])  # number of sequences
+    n = len(preds[0][0])
+    n_obj = len(preds)
     scores = np.zeros(n)
+    weights = obj_config.get("weights", [1.0 / n_obj] * n_obj)
+    directions = obj_config['directions']
 
     if strategy == "UCB":
         for i, (mean, std) in enumerate(preds):
-            w = weights[i] if weights is not None else 1.0 / len(preds)
+
+            # Flip sign if objective is minimization
+            if directions[i] == "min":
+                mean = -mean
+
+            w = weights[i]
             scores += w * (mean + beta * std)
 
     # TODO: extend with Pareto-based EI, Thompson sampling, diversity clustering ....
     return scores
 
-def get_next_seq_bo(seq_ids:pd.Series, preds, top_k=10, strategy="UCB", weights=None):
+def get_next_seq_bo(seq_ids:pd.Series,obj_config, preds, top_k=10, strategy="UCB", weights=None):
 
-    scores = acquisition_function(preds, strategy=strategy, weights=weights)
+    scores = acquisition_function(preds, obj_config, strategy=strategy, weights=weights)
     idx = np.argsort(scores)[::-1][:top_k]
     next_best_seqs = seq_ids.iloc[idx].reset_index(drop=True)
 

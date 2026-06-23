@@ -8,6 +8,7 @@ def sample_initial_training_sequnces(exp_dir,training_seq_size,manipold="TSNE" )
 
     seq_space_fpath = os.path.join(exp_dir,'seq_space.csv')
     gen_seq_features = pd.read_csv(seq_space_fpath)
+    gen_seqs = gen_seq_features['seq_id']
     gen_seq_features = gen_seq_features.drop('seq_id',axis=1)
 
     if manipold=="TSNE":
@@ -30,6 +31,7 @@ def sample_initial_training_sequnces(exp_dir,training_seq_size,manipold="TSNE" )
         selected_indices.append(best_idx)
 
     training_df = gen_seq_features.iloc[selected_indices]
+    training_df['seq_id'] = gen_seqs.iloc[selected_indices]
     training_seq_fpath = os.path.join(exp_dir,'training_seqs.csv')
     training_df.to_csv(training_seq_fpath,index=False)
 
