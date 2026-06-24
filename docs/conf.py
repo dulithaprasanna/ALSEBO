@@ -83,7 +83,10 @@ autodoc_mock_imports = ["torch", "transformers", "tensorflow", "dca"]
 templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = ".rst"
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".ipynb": "myst-nb",
+}
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
