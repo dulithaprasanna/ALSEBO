@@ -1,49 +1,66 @@
-.. These are examples of badges you might want to add to your README:
-   please update the URLs accordingly
-
-    .. image:: https://api.cirrus-ci.com/github/<USER>/ALSEBO.svg?branch=main
-        :alt: Built Status
-        :target: https://cirrus-ci.com/github/<USER>/ALSEBO
-    .. image:: https://readthedocs.org/projects/ALSEBO/badge/?version=latest
-        :alt: ReadTheDocs
-        :target: https://ALSEBO.readthedocs.io/en/stable/
-    .. image:: https://img.shields.io/coveralls/github/<USER>/ALSEBO/main.svg
-        :alt: Coveralls
-        :target: https://coveralls.io/r/<USER>/ALSEBO
-    .. image:: https://img.shields.io/pypi/v/ALSEBO.svg
-        :alt: PyPI-Server
-        :target: https://pypi.org/project/ALSEBO/
-    .. image:: https://img.shields.io/conda/vn/conda-forge/ALSEBO.svg
-        :alt: Conda-Forge
-        :target: https://anaconda.org/conda-forge/ALSEBO
-    .. image:: https://pepy.tech/badge/ALSEBO/month
-        :alt: Monthly Downloads
-        :target: https://pepy.tech/project/ALSEBO
-    .. image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter
-        :alt: Twitter
-        :target: https://twitter.com/ALSEBO
-
-.. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
-    :alt: Project generated with PyScaffold
-    :target: https://pyscaffold.org/
-
-|
-
 ======
 ALSEBO
 ======
 
+**Active Learning Sequence Exploration via Bayesian Optimization**
 
-    Add a short description here!
+ALSEBO is a Python framework for navigating protein sequence space using a
+closed-loop active learning strategy. It combines a Variational Autoencoder
+(VAE) that generates a continuous latent landscape of sequences with
+Bayesian Optimisation (BO) to iteratively propose the most promising
+candidates for experimental testing.
 
+Pipeline overview
+=================
 
-A longer description of your project goes here...
+.. code-block:: text
 
+    MSA
+     │
+     ▼
+    VAE  ──────────────────────────────────────────────────────────────┐
+     │  generates a latent landscape & samples diverse sequences        │
+     ▼                                                                  │
+    Sequence Space                                                      │
+     │  featurized via DCA · ESM · latent coordinates                   │
+     ▼                                                                  │
+    Initial Training Set                                                │
+     │  diverse subset selected by t-SNE/PCA + k-means clustering       │
+     ▼                                                                  │
+    Wet-lab / in silico evaluation                                      │
+     │  measure objective(s): fitness, stability, activity …            │
+     ▼                                                                  │
+    Gaussian Process Regression                                         │
+     │  fits a surrogate model per objective                            │
+     ▼                                                                  │
+    Acquisition Function (UCB)                                         │
+     │  scores the unexplored sequence space                            │
+     ▼                                                                  │
+    Next Batch  ────────────────────────────────────────────────────────┘
+     top-k sequences recommended for the next experiment round
 
-.. _pyscaffold-notes:
+Key features
+============
 
-Note
-====
+- **Multi-objective BO** — weighted scalarisation of multiple fitness
+  objectives with configurable direction (maximise / minimise).
+- **Pluggable featurisation** — swap between DCA (Direct Coupling
+  Analysis), ESM protein language model embeddings, or raw VAE latent
+  coordinates.
+- **Diversity-aware initialisation** — t-SNE or PCA projection followed by
+  k-means ensures the first experimental batch covers the full sequence
+  landscape.
+- **Append-friendly data model** — each experimental round appends to a
+  single CSV, making it easy to resume or inspect the optimisation history.
 
-This project has been set up using PyScaffold 4.6. For details and usage
-information on PyScaffold see https://pyscaffold.org/.
+Installation
+============
+
+.. code-block:: bash
+
+    git clone https://github.com/dulithaprasanna/ALSEBO.git
+    cd ALSEBO
+    pip install -e .
+
+See the `installation guide <docs/installation.rst>`_ for full details
+including the DCA dependency.
