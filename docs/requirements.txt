@@ -1,5 +1,17 @@
 # Requirements file for ReadTheDocs, check .readthedocs.yml.
 # To build the module reference correctly, make sure every external package
 # under `install_requires` in `setup.cfg` is also listed here!
-sphinx>=3.2.1
-# sphinx_rtd_theme
+sphinx>=5.0
+sphinx_rtd_theme
+myst-nb
+
+# ALSEBO core dependencies (needed for autodoc to import modules)
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+joblib
+biopython
+
+# torch, transformers, and dca are mocked in conf.py (too heavy for RTD)
