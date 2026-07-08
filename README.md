@@ -43,18 +43,9 @@ The pipeline runs in four model-agnostic stages, each replaceable:
 - The advantage **survives representation-neutral oracles** (one-hot, physicochemical) and a non-DCA CNN objective, so it reflects the DCA feature geometry (FDC = −0.94), not the benchmark's construction.
 - The framework **generalizes** to the GFP orthologs **cgreGFP** (~41% similarity) and **amacGFP** (~82%), and to a non-GFP enzyme, **Ube4b** (ubiquitin-ligase activity under a CNN objective), reaching predicted optima in tens of evaluations.
 
-### Feature benchmark
-
-![Feature benchmark](assets/feature_benchmark.png)
-
-*(A) Best predicted fitness vs. evaluation number for DCA, ESM-2, latent, and random search. (B) Optimality gap on a log scale. (C) Steps-to-optimum (100 runs) across DCA/ESM-2/latent representations, evaluated under DCA, one-hot, and physicochemical objectives (success rates annotated). (D) Fitness–distance correlation, local smoothness, and predictability (R²) for each representation × objective pair.*
-
-### Generalization across families
-
-![Generalization](assets/generalization.png)
-
-*(A–C) BO trajectories over the DCA landscape and PCA-projected fitness for cgreGFP, amacGFP, and Ube4b. (D–E) Success rate and steps-to-optimum per family. (F) RMSF profile confirming structural stability of the optimized variant.*
-
+| | Feature benchmark | Generalization across families |
+|---|---|---|
+| | ![Feature benchmark](assets/feature_benchmark.png) | ![Generalization](assets/generalization.png) |
 
 ---
 
