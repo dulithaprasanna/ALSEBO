@@ -13,6 +13,14 @@ candidates for experimental testing.
 Pipeline overview
 =================
 
+.. figure:: assets/pipeline.png
+   :alt: ALSEBO closed-loop active learning pipeline
+   :align: center
+
+   Closed-loop active learning pipeline: a VAE-derived latent landscape
+   feeds sequence selection, evaluation, and Bayesian optimisation, which
+   in turn proposes the next batch of sequences.
+
 .. code-block:: text
 
     MSA
@@ -38,6 +46,7 @@ Pipeline overview
      ▼                                                                  │
     Next Batch  ────────────────────────────────────────────────────────┘
      top-k sequences recommended for the next experiment round
+
 
 Key features
 ============
